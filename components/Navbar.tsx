@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { gsap } from "gsap";
 import { LoomieLogoMark } from "./LoomieLogoMark";
+import { useLenis } from "./LenisScrollProvider";
 
 const NAV_ITEMS = [
   { label: "Story", href: "#story", number: "01" },
@@ -20,6 +21,7 @@ export function Navbar() {
   const lastScrollY = useRef(0);
   const overlayRef = useRef<HTMLDivElement>(null);
   const menuLinksRef = useRef<HTMLDivElement>(null);
+  const lenis = useLenis();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,13 +49,20 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const scroller = lenis;
+    return () => {
+      scroller?.current?.start();
+    };
+  }, [lenis]);
+
   // GSAP Powerup & Down Overlay Animation
   const toggleMenu = () => {
     if (!overlayRef.current) return;
 
     if (!menuOpen) {
       setMenuOpen(true);
-      document.body.style.overflow = "hidden";
+      lenis?.current?.stop();
 
       const tl = gsap.timeline();
 
@@ -85,7 +94,7 @@ export function Navbar() {
       const tl = gsap.timeline({
         onComplete: () => {
           setMenuOpen(false);
-          document.body.style.overflow = "auto";
+          lenis?.current?.start();
           if (overlayRef.current) {
             overlayRef.current.style.display = "none";
           }
