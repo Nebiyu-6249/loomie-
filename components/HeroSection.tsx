@@ -18,6 +18,7 @@ interface BentoCard {
   span: string;
   logoOverlay?: string;
   tag?: string;
+  href?: string;
 }
 
 const BENTO_GRID_ITEMS: BentoCard[] = [
@@ -76,6 +77,29 @@ const CATEGORIES: FilterCategory[] = [
   { id: "TECH", label: "TECH" },
 ];
 
+function CardShell({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <a
+        href={href}
+        className={`${className} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return <div className={className}>{children}</div>;
+}
+
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
@@ -87,103 +111,110 @@ export function HeroSection() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
+    const mm = gsap.matchMedia();
+
     const ctx = gsap.context(() => {
-      // Master Initial Landing Page Animation Timeline
-      const masterTL = gsap.timeline({ delay: 0.1 });
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // Master Initial Landing Page Animation Timeline
+        const masterTL = gsap.timeline({ delay: 0.1 });
 
-      // 1. Kinetic Headline 3D Character Entry
-      if (headlineRef.current) {
-        const textSplit = new SplitType(headlineRef.current, {
-          types: "chars,words",
-          tagName: "span",
-        });
+        // 1. Kinetic Headline 3D Character Entry
+        if (headlineRef.current) {
+          const textSplit = new SplitType(headlineRef.current, {
+            types: "chars,words",
+            tagName: "span",
+          });
 
-        if (textSplit.chars) {
+          if (textSplit.chars) {
+            masterTL.fromTo(
+              textSplit.chars,
+              {
+                y: 120,
+                rotateX: -85,
+                opacity: 0,
+                scale: 0.85,
+              },
+              {
+                y: 0,
+                rotateX: 0,
+                opacity: 1,
+                scale: 1,
+                duration: 1.2,
+                stagger: 0.025,
+                ease: "power4.out",
+              }
+            );
+          }
+        }
+
+        // 2. Subtitle Fade & Slide Up
+        if (subtitleRef.current) {
           masterTL.fromTo(
-            textSplit.chars,
-            {
-              y: 120,
-              rotateX: -85,
-              opacity: 0,
-              scale: 0.85,
-            },
+            subtitleRef.current,
+            { y: 40, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+            "-=0.6"
+          );
+        }
+
+        // 3. Filter Bar Pop In
+        if (pillBarRef.current) {
+          masterTL.fromTo(
+            pillBarRef.current.children,
+            { y: 20, opacity: 0, scale: 0.95 },
             {
               y: 0,
-              rotateX: 0,
               opacity: 1,
               scale: 1,
-              duration: 1.2,
-              stagger: 0.025,
-              ease: "power4.out",
+              duration: 0.5,
+              stagger: 0.04,
+              ease: "back.out(1.5)",
+            },
+            "-=0.4"
+          );
+        }
+
+        // 4. Bento Grid Cards Entrance
+        if (gridRef.current) {
+          gsap.fromTo(
+            gridRef.current.children,
+            { y: 80, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 1,
+              stagger: 0.15,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: gridRef.current,
+                start: "top 88%",
+                toggleActions: "play none none reverse",
+              },
             }
           );
         }
-      }
 
-      // 2. Subtitle Fade & Slide Up
-      if (subtitleRef.current) {
-        masterTL.fromTo(
-          subtitleRef.current,
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
-          "-=0.6"
-        );
-      }
-
-      // 3. Filter Bar Pop In
-      if (pillBarRef.current) {
-        masterTL.fromTo(
-          pillBarRef.current.children,
-          { y: 20, opacity: 0, scale: 0.95 },
-          {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 0.5,
-            stagger: 0.04,
-            ease: "back.out(1.5)",
-          },
-          "-=0.4"
-        );
-      }
-
-      // 4. Bento Grid Cards Entrance
-      if (gridRef.current) {
-        gsap.fromTo(
-          gridRef.current.children,
-          { y: 80, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 1,
-            stagger: 0.15,
-            ease: "power3.out",
+        // 5. ScrollTrigger Parallax Scrub on Headline after initial entry
+        if (headlineRef.current && containerRef.current) {
+          gsap.to(headlineRef.current, {
+            yPercent: -25,
+            opacity: 0.3,
+            ease: "none",
             scrollTrigger: {
-              trigger: gridRef.current,
-              start: "top 88%",
-              toggleActions: "play none none reverse",
+              trigger: containerRef.current,
+              start: "top top",
+              end: "bottom 30%",
+              scrub: 0.5,
             },
-          }
-        );
-      }
-
-      // 5. ScrollTrigger Parallax Scrub on Headline after initial entry
-      if (headlineRef.current && containerRef.current) {
-        gsap.to(headlineRef.current, {
-          yPercent: -25,
-          opacity: 0.3,
-          ease: "none",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top top",
-            end: "bottom 30%",
-            scrub: 0.5,
-          },
-        });
-      }
+          });
+        }
+      });
     }, containerRef);
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      mm.revert();
+    };
   }, []);
 
   const filteredCards =
@@ -196,7 +227,7 @@ export function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="pt-36 pb-24 md:pt-44 md:pb-36 px-6 md:px-12 max-w-[1700px] mx-auto overflow-hidden select-none"
+      className="pt-36 pb-24 md:pt-44 md:pb-36 px-6 md:px-12 max-w-[1700px] mx-auto overflow-hidden"
     >
       {/* Studio Badge */}
       <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-none bg-foreground/10 border border-foreground/20 text-foreground text-xs font-mono font-bold uppercase tracking-wider mb-8">
@@ -209,6 +240,7 @@ export function HeroSection() {
         <div className="lg:col-span-7">
           <h1
             ref={headlineRef}
+            aria-label="Design that connects"
             className="text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem] font-extrabold tracking-tight leading-[0.92] text-foreground font-sans uppercase max-w-3xl"
             style={{ perspective: "1000px", willChange: "transform, opacity" }}
           >
@@ -245,9 +277,10 @@ export function HeroSection() {
       {/* Bento Grid Showcase */}
       <div ref={gridRef} className="grid grid-cols-12 gap-8 md:gap-10">
         {filteredCards.map((card, index) => (
-          <div
+          <CardShell
             key={card.id}
-            className={`${card.span} group relative rounded-none overflow-hidden bg-surface-card border border-border-custom shadow-2xl transition-all duration-500 hover:border-foreground cursor-pointer`}
+            href={card.href}
+            className={`${card.span} group relative rounded-none overflow-hidden bg-surface-card border border-border-custom shadow-2xl transition-all duration-500 hover:border-foreground`}
           >
             <div className={`w-full ${card.aspect} relative overflow-hidden rounded-none`}>
               <Image
@@ -289,10 +322,10 @@ export function HeroSection() {
               </div>
 
               <div className="w-12 h-12 rounded-none bg-background border border-border-custom flex items-center justify-center text-foreground group-hover:bg-foreground group-hover:text-background transition-all duration-300 shadow-md">
-                <ArrowUpRight className="w-5 h-5" />
+                <ArrowUpRight className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
-          </div>
+          </CardShell>
         ))}
       </div>
     </section>

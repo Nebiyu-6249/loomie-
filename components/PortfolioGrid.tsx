@@ -15,6 +15,7 @@ interface CaseStudy {
   span: string;
   logoOverlay?: string;
   overlayStyle?: "white" | "dark" | "blue" | "orange";
+  href?: string;
 }
 
 const CASE_STUDIES: CaseStudy[] = [
@@ -110,6 +111,29 @@ const CATEGORIES: FilterCategory[] = [
   { id: "TECH", label: "TECH" },
 ];
 
+function CardShell({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <a
+        href={href}
+        className={`${className} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return <div className={className}>{children}</div>;
+}
+
 export function PortfolioGrid() {
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
@@ -121,7 +145,7 @@ export function PortfolioGrid() {
         );
 
   return (
-    <section id="grid" className="py-32 px-6 md:px-12 max-w-[1700px] mx-auto border-t border-border-custom select-none">
+    <section id="grid" className="py-32 px-6 md:px-12 max-w-[1700px] mx-auto border-t border-border-custom">
       {/* Section Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
         <div>
@@ -144,9 +168,10 @@ export function PortfolioGrid() {
       {/* 2-Column Asymmetric Case Study Showcase (Matching Reference Screenshot 100%) */}
       <div className="grid grid-cols-12 gap-8 md:gap-12">
         {filteredStudies.map((study) => (
-          <div
+          <CardShell
             key={study.id}
-            className={`${study.span} group flex flex-col justify-between cursor-pointer`}
+            href={study.href}
+            className={`${study.span} group flex flex-col justify-between`}
           >
             {/* Image Container with Brand Overlay */}
             <div className={`w-full ${study.aspect} relative overflow-hidden rounded-none bg-surface-card border border-border-custom shadow-xl transition-all duration-500 group-hover:border-foreground`}>
@@ -184,10 +209,10 @@ export function PortfolioGrid() {
               </div>
 
               <div className="w-10 h-10 rounded-none bg-surface-card border border-border-custom flex items-center justify-center text-foreground group-hover:bg-foreground group-hover:text-background transition-all duration-300 shadow-sm">
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
               </div>
             </div>
-          </div>
+          </CardShell>
         ))}
       </div>
 

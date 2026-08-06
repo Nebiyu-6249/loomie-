@@ -14,37 +14,44 @@ export function Footer() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
+    const mm = gsap.matchMedia();
+
     const ctx = gsap.context(() => {
-      // Monumental Animated Logo Reveal for L [LOGO] M I E
-      if (giantLogoRef.current) {
-        const children = giantLogoRef.current.children;
-        if (children && children.length > 0) {
-          gsap.fromTo(
-            Array.from(children),
-            { y: 140, opacity: 0, scale: 0.85 },
-            {
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 1.3,
-              stagger: 0.06,
-              ease: "power4.out",
-              scrollTrigger: {
-                trigger: giantLogoRef.current,
-                start: "top 92%",
-                toggleActions: "play none none reverse",
-              },
-            }
-          );
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // Monumental Animated Logo Reveal for L [LOGO] M I E
+        if (giantLogoRef.current) {
+          const children = giantLogoRef.current.children;
+          if (children && children.length > 0) {
+            gsap.fromTo(
+              Array.from(children),
+              { y: 140, opacity: 0, scale: 0.85 },
+              {
+                y: 0,
+                opacity: 1,
+                scale: 1,
+                duration: 1.3,
+                stagger: 0.06,
+                ease: "power4.out",
+                scrollTrigger: {
+                  trigger: giantLogoRef.current,
+                  start: "top 92%",
+                  toggleActions: "play none none reverse",
+                },
+              }
+            );
+          }
         }
-      }
+      });
     }, footerRef);
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      mm.revert();
+    };
   }, []);
 
   return (
-    <footer id="contact" ref={footerRef} className="relative bg-surface border-t border-border-custom pt-24 pb-12 overflow-hidden select-none">
+    <footer id="contact" ref={footerRef} className="relative bg-surface border-t border-border-custom pt-24 pb-12 overflow-hidden">
       <div className="max-w-[1700px] mx-auto px-6 md:px-12">
         {/* Main CTA Heading */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-10">
@@ -60,7 +67,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <a
               href="mailto:hello@loomiestudio.com"
-              className="inline-flex items-center gap-4 px-8 py-5 rounded-none bg-foreground text-background font-bold text-lg transition-all duration-300 hover:scale-105 hover:bg-white hover:text-black border border-foreground group"
+              className="inline-flex items-center gap-4 px-8 py-5 rounded-none bg-foreground text-background font-bold text-lg transition-all duration-300 hover:scale-105 hover:bg-white hover:text-black border border-foreground group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               <Mail className="w-5 h-5" />
               <span>hello@loomiestudio.com</span>
@@ -135,22 +142,22 @@ export function Footer() {
             </h4>
             <ul className="space-y-3 text-foreground-secondary">
               <li>
-                <a href="#grid" className="hover:text-foreground transition-colors">
+                <a href="#grid" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   Work Showcase
                 </a>
               </li>
               <li>
-                <a href="#architecture" className="hover:text-foreground transition-colors">
+                <a href="#architecture" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   Technical Architecture
                 </a>
               </li>
               <li>
-                <a href="#grid" className="hover:text-foreground transition-colors">
+                <a href="#grid" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   Creative Archive
                 </a>
               </li>
               <li>
-                <a href="#contact" className="hover:text-foreground transition-colors">
+                <a href="#contact" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   Start a Project
                 </a>
               </li>
@@ -164,25 +171,25 @@ export function Footer() {
             </h4>
             <ul className="space-y-3 text-foreground-secondary">
               <li>
-                <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between">
+                <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   <span>X / Twitter</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between">
+                <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   <span>Instagram</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
               </li>
               <li>
-                <a href="https://dribbble.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between">
+                <a href="https://dribbble.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   <span>Dribbble</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
               </li>
               <li>
-                <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between">
+                <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
                   <span>LinkedIn</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
