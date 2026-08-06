@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Plus, ArrowUpRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { FilterBar, type FilterCategory } from "./FilterBar";
 
 interface CaseStudy {
   id: string;
@@ -14,6 +15,7 @@ interface CaseStudy {
   span: string;
   logoOverlay?: string;
   overlayStyle?: "white" | "dark" | "blue" | "orange";
+  href?: string;
 }
 
 const CASE_STUDIES: CaseStudy[] = [
@@ -99,24 +101,51 @@ const CASE_STUDIES: CaseStudy[] = [
   },
 ];
 
+const CATEGORIES: FilterCategory[] = [
+  { id: "ALL", label: "ALL" },
+  { id: "ECOMMERCE", label: "ECOMMERCE" },
+  { id: "FOOD", label: "FOOD & BEVERAGE" },
+  { id: "ENTERTAINMENT", label: "ENTERTAINMENT" },
+  { id: "INDUSTRIAL", label: "MANUFACTURING & INDUSTRIAL" },
+  { id: "SPATIAL", label: "SPATIAL" },
+  { id: "TECH", label: "TECH" },
+];
+
+function CardShell({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <a
+        href={href}
+        className={`${className} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return <div className={className}>{children}</div>;
+}
+
 export function PortfolioGrid() {
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
   const filteredStudies =
     activeFilter === "ALL"
       ? CASE_STUDIES
-      : CASE_STUDIES.filter((item) => {
-          if (activeFilter === "FOOD") return item.categoryCode === "food";
-          if (activeFilter === "TECH") return item.categoryCode === "tech";
-          if (activeFilter === "ENTERTAINMENT") return item.categoryCode === "entertainment";
-          if (activeFilter === "INDUSTRIAL") return item.categoryCode === "industrial";
-          if (activeFilter === "SPATIAL") return item.categoryCode === "spatial";
-          if (activeFilter === "ECOMMERCE") return item.categoryCode === "ecommerce";
-          return true;
-        });
+      : CASE_STUDIES.filter(
+          (item) => item.categoryCode === activeFilter.toLowerCase()
+        );
 
   return (
-    <section id="grid" className="py-32 px-6 md:px-12 max-w-[1700px] mx-auto border-t border-border-custom select-none">
+    <section id="grid" className="py-32 px-6 md:px-12 max-w-[1700px] mx-auto border-t border-border-custom">
       {/* Section Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
         <div>
@@ -129,44 +158,20 @@ export function PortfolioGrid() {
         </div>
       </div>
 
-      {/* Pill Filter Bar (Matching Reference Screenshot 100%) */}
-      <div className="flex flex-wrap items-center gap-3.5 mb-16">
-        {[
-          { id: "ALL", label: "ALL", count: 24 },
-          { id: "ECOMMERCE", label: "ECOMMERCE", count: 7 },
-          { id: "FOOD", label: "FOOD & BEVERAGE", count: 2 },
-          { id: "ENTERTAINMENT", label: "ENTERTAINMENT", count: 3 },
-          { id: "INDUSTRIAL", label: "MANUFACTURING & INDUSTRIAL", count: 2 },
-          { id: "TECH", label: "TECH", count: 4 },
-        ].map((pill) => (
-          <button
-            key={pill.id}
-            onClick={() => setActiveFilter(pill.id)}
-            className={`px-6 py-3.5 rounded-none text-xs sm:text-sm font-mono font-bold tracking-wider uppercase transition-all duration-300 flex items-center gap-2.5 ${
-              activeFilter === pill.id
-                ? "bg-foreground text-background shadow-xl scale-105 border border-foreground"
-                : "bg-surface-card border border-border-custom text-foreground-secondary hover:text-foreground hover:border-foreground"
-            }`}
-          >
-            <span>
-              {pill.label} <sup className="text-[11px] opacity-70">({pill.count})</sup>
-            </span>
-            <Plus className="w-4 h-4" />
-          </button>
-        ))}
-
-        <button className="px-6 py-3.5 rounded-none bg-surface-card border border-border-custom text-foreground-secondary hover:text-foreground text-xs sm:text-sm font-mono font-bold tracking-wider uppercase flex items-center gap-2.5">
-          <span>SEE MORE</span>
-          <ChevronDown className="w-4 h-4" />
-        </button>
-      </div>
+      <FilterBar
+        items={CASE_STUDIES}
+        categories={CATEGORIES}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
 
       {/* 2-Column Asymmetric Case Study Showcase (Matching Reference Screenshot 100%) */}
       <div className="grid grid-cols-12 gap-8 md:gap-12">
         {filteredStudies.map((study) => (
-          <div
+          <CardShell
             key={study.id}
-            className={`${study.span} group flex flex-col justify-between cursor-pointer`}
+            href={study.href}
+            className={`${study.span} group flex flex-col justify-between`}
           >
             {/* Image Container with Brand Overlay */}
             <div className={`w-full ${study.aspect} relative overflow-hidden rounded-none bg-surface-card border border-border-custom shadow-xl transition-all duration-500 group-hover:border-foreground`}>
@@ -204,12 +209,18 @@ export function PortfolioGrid() {
               </div>
 
               <div className="w-10 h-10 rounded-none bg-surface-card border border-border-custom flex items-center justify-center text-foreground group-hover:bg-foreground group-hover:text-background transition-all duration-300 shadow-sm">
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
               </div>
             </div>
-          </div>
+          </CardShell>
         ))}
       </div>
+
+      {filteredStudies.length === 0 && (
+        <p className="font-mono text-sm text-foreground-secondary uppercase tracking-widest">
+          No work in this category yet.
+        </p>
+      )}
     </section>
   );
 }

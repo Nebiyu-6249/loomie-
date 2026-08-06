@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f4f4f7;
@@ -152,4 +153,13 @@ html.lenis, html.lenis body {
 ::-webkit-scrollbar-thumb {
   background: var(--foreground-secondary);
   border-radius: 0px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-smooth {
+    animation: none;
+  }
+  html, body {
+    transition: none;
+  }
 }

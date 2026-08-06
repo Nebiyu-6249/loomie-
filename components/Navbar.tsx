@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { gsap } from "gsap";
 import { LoomieLogoMark } from "./LoomieLogoMark";
+import { useLenis } from "./LenisScrollProvider";
 
 const NAV_ITEMS = [
   { label: "Story", href: "#story", number: "01" },
@@ -20,6 +21,9 @@ export function Navbar() {
   const lastScrollY = useRef(0);
   const overlayRef = useRef<HTMLDivElement>(null);
   const menuLinksRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const lenis = useLenis();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,13 +51,20 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const scroller = lenis;
+    return () => {
+      scroller?.current?.start();
+    };
+  }, [lenis]);
+
   // GSAP Powerup & Down Overlay Animation
   const toggleMenu = () => {
     if (!overlayRef.current) return;
 
     if (!menuOpen) {
       setMenuOpen(true);
-      document.body.style.overflow = "hidden";
+      lenis?.current?.stop();
 
       const tl = gsap.timeline();
 
@@ -85,7 +96,7 @@ export function Navbar() {
       const tl = gsap.timeline({
         onComplete: () => {
           setMenuOpen(false);
-          document.body.style.overflow = "auto";
+          lenis?.current?.start();
           if (overlayRef.current) {
             overlayRef.current.style.display = "none";
           }
@@ -112,6 +123,54 @@ export function Navbar() {
     }
   };
 
+  // Keep the latest toggleMenu reachable from the keydown listener without
+  // making it an effect dependency.
+  const toggleMenuRef = useRef(toggleMenu);
+  useEffect(() => {
+    toggleMenuRef.current = toggleMenu;
+  });
+
+  // Escape to close, and trap focus inside the overlay while it is open
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!menuOpen || !overlay) return;
+
+    const trigger = triggerRef.current;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        toggleMenuRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(
+        overlay.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      trigger?.focus();
+    };
+  }, [menuOpen]);
+
   return (
     <>
       <header
@@ -125,7 +184,7 @@ export function Navbar() {
           {/* Constant Brand Logo Icon */}
           <a
             href="#"
-            className="group flex items-center transition-transform duration-300 hover:scale-110 select-none"
+            className="group flex items-center transition-transform duration-300 hover:scale-110 select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             aria-label="LOOMIE Home"
           >
             <LoomieLogoMark className="w-14 h-7" />
@@ -143,7 +202,7 @@ export function Navbar() {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-foreground font-medium tracking-normal opacity-90 transition-all duration-300 hover:opacity-100 hover:scale-105 relative group py-1"
+                className="text-foreground font-medium tracking-normal opacity-90 transition-all duration-300 hover:opacity-100 hover:scale-105 relative group py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
               >
                 <span>{item.label}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all duration-300 group-hover:w-full" />
@@ -155,8 +214,11 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {/* GSAP Fullscreen Menu Trigger Button: Hidden on desktop when header text links are visible, shown on mobile or on scroll down */}
             <button
+              ref={triggerRef}
               onClick={toggleMenu}
-              className={`p-3.5 rounded-none bg-surface-card border border-border-custom text-foreground transition-all duration-500 hover:scale-105 hover:border-foreground items-center gap-2.5 shadow-sm group ${
+              aria-expanded={menuOpen}
+              aria-controls="main-menu"
+              className={`p-3.5 rounded-none bg-surface-card border border-border-custom text-foreground transition-all duration-500 hover:scale-105 hover:border-foreground items-center gap-2.5 shadow-sm group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground ${
                 showMenuLinks ? "flex md:hidden" : "flex"
               }`}
               aria-label="Toggle Fullscreen Menu"
@@ -170,7 +232,7 @@ export function Navbar() {
             {/* "Lets Talk" Button: Hides smoothly on scroll down */}
             <a
               href="#contact"
-              className={`px-7 py-3 rounded-none bg-foreground text-background font-medium text-base transition-all duration-500 hover:bg-surface-card hover:text-foreground items-center gap-3 shadow-md border border-foreground transform ${
+              className={`px-7 py-3 rounded-none bg-foreground text-background font-medium text-base transition-all duration-500 hover:bg-surface-card hover:text-foreground items-center gap-3 shadow-md border border-foreground transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground ${
                 showMenuLinks
                   ? "opacity-100 translate-y-0 pointer-events-auto flex"
                   : "opacity-0 -translate-y-4 pointer-events-none hidden"
@@ -186,6 +248,9 @@ export function Navbar() {
       {/* GSAP Fullscreen Powerup & Down Curtain Overlay Menu */}
       <div
         ref={overlayRef}
+        id="main-menu"
+        role="dialog"
+        aria-modal="true"
         className="fixed inset-0 z-[99999] bg-background text-foreground hidden flex-col justify-between p-8 md:p-16 overflow-hidden select-none border-b border-foreground"
         style={{
           clipPath: "polygon(0 0, 100% 0, 100% 0, 0 0)",
@@ -202,8 +267,9 @@ export function Navbar() {
           </div>
 
           <button
+            ref={closeButtonRef}
             onClick={toggleMenu}
-            className="p-4 rounded-none bg-foreground text-background font-bold text-sm transition-all duration-300 hover:scale-110 flex items-center gap-2"
+            className="p-4 rounded-none bg-foreground text-background font-bold text-sm transition-all duration-300 hover:scale-110 flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
             <span>Close</span>
             <X className="w-5 h-5" />
@@ -222,7 +288,7 @@ export function Navbar() {
                 key={item.label}
                 href={item.href}
                 onClick={toggleMenu}
-                className="group flex items-center gap-6 text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-foreground-secondary hover:text-foreground transition-all duration-500 hover:translate-x-4"
+                className="group flex items-center gap-6 text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-foreground-secondary hover:text-foreground transition-all duration-500 hover:translate-x-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
               >
                 <span className="font-mono text-base md:text-xl font-bold opacity-40 group-hover:opacity-100 text-foreground transition-opacity">
                   ({item.number})
@@ -241,13 +307,13 @@ export function Navbar() {
             <span>LOOMIE STUDIO 2026</span> • <span>TOKYO / LONDON / NYC</span>
           </div>
           <div className="flex items-center gap-8">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
               X / Twitter ↗
             </a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
               Instagram ↗
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
               LinkedIn ↗
             </a>
           </div>
